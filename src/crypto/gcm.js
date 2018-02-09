@@ -18,13 +18,17 @@
 /**
  * @fileoverview This module wraps native AES-GCM en/decryption for both
  * the WebCrypto api as well as node.js' crypto api.
+ * @requires asmcrypto.js
+ * @requires config
+ * @requires util
+ * @module crypto/gcm
  */
 
 'use strict';
 
-import asmCrypto from 'asmcrypto-lite';
-import util from '../util.js';
+import { AES_GCM } from 'asmcrypto.js';
 import config from '../config';
+import util from '../util';
 
 const webCrypto = util.getWebCrypto(); // no GCM support in IE11, Safari 9
 const nodeCrypto = util.getNodeCrypto();
@@ -52,7 +56,7 @@ function encrypt(cipher, plaintext, key, iv) {
   } else if (nodeCrypto && config.use_native) { // Node crypto library
     return nodeEncrypt(plaintext, key, iv);
   } else { // asm.js fallback
-    return Promise.resolve(asmCrypto.AES_GCM.encrypt(plaintext, key, iv));
+    return Promise.resolve(AES_GCM.encrypt(plaintext, key, iv));
   }
 }
 
@@ -74,7 +78,7 @@ function decrypt(cipher, ciphertext, key, iv) {
   } else if (nodeCrypto && config.use_native) { // Node crypto library
     return nodeDecrypt(ciphertext, key, iv);
   } else { // asm.js fallback
-    return Promise.resolve(asmCrypto.AES_GCM.decrypt(ciphertext, key, iv));
+    return Promise.resolve(AES_GCM.decrypt(ciphertext, key, iv));
   }
 }
 

@@ -1,4 +1,7 @@
 /**
+ * @requires rusha
+ * @requires ripemd160
+ * @requires asmcrypto.js
  * @requires crypto/hash/sha
  * @requires crypto/hash/md5
  * @requires util
@@ -9,7 +12,7 @@
 
 import Rusha from 'rusha';
 import RIPEMD160 from 'ripemd160';
-import asmCrypto from 'asmcrypto-lite';
+import { SHA256 } from 'asmcrypto.js';
 import sha from './sha.js';
 import md5 from './md5.js';
 import util from '../../util.js';
@@ -51,7 +54,7 @@ if(nodeCrypto) { // Use Node native crypto for all hash functions
     /** @see module:crypto/hash/sha.sha224 */
     sha224: sha.sha224,
     /** @see module:asmcrypto */
-    sha256: asmCrypto.SHA256.bytes,
+    sha256: SHA256.bytes,
     /** @see module:crypto/hash/sha.sha384 */
     sha384: sha.sha384,
     // TODO: compare sha512 in asmcrypto.js and jsSHA

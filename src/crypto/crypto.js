@@ -71,7 +71,6 @@ export default {
           var e = publicParams[1].toBigInteger();
           m = data.toBigInteger();
           return constructParams(types, [rsa.encrypt(m, e, n)]);
-
         case 'elgamal':
           var elgamal = new publicKey.elgamal();
           var p = publicParams[0].toBigInteger();
@@ -79,7 +78,6 @@ export default {
           var y = publicParams[2].toBigInteger();
           m = data.toBigInteger();
           return constructParams(types, elgamal.encrypt(m, g, p, y));
-
         case 'ecdh':
           var ecdh = publicKey.elliptic.ecdh;
           var curve = publicParams[0];
@@ -89,7 +87,6 @@ export default {
             curve.oid, kdf_params.cipher, kdf_params.hash, data, R, fingerprint
           );
           return constructParams(types, [res.V, res.C]);
-
         default:
           return [];
       }
@@ -130,7 +127,6 @@ export default {
           var c2 = dataIntegers[1].toBigInteger();
           p = keyIntegers[0].toBigInteger();
           return elgamal.decrypt(c1, c2, p, x);
-
         case 'ecdh':
           var ecdh = publicKey.elliptic.ecdh;
           var curve = keyIntegers[0];
@@ -139,7 +135,6 @@ export default {
           var C = dataIntegers[1].data;
           var r = keyIntegers[3].toBigInteger();
           return ecdh.decrypt(curve.oid, kdf_params.cipher, kdf_params.hash, V, C, r, fingerprint);
-
         default:
           return null;
       }
@@ -267,18 +262,15 @@ export default {
         return rsa.generate(bits, "10001").then(function(keyObject) {
           return constructParams(types, [keyObject.n, keyObject.ee, keyObject.d, keyObject.p, keyObject.q, keyObject.u]);
         });
-
       case 'ecdsa':
       case 'eddsa':
         return publicKey.elliptic.generate(curve).then(function (keyObject) {
           return constructParams(types, [keyObject.oid, keyObject.Q, keyObject.d]);
         });
-
       case 'ecdh':
         return publicKey.elliptic.generate(curve).then(function (keyObject) {
           return constructParams(types, [keyObject.oid, keyObject.Q, [keyObject.hash, keyObject.cipher], keyObject.d]);
         });
-
       default:
         throw new Error('Unsupported algorithm for key generation.');
     }

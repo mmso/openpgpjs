@@ -243,8 +243,8 @@ Signature.prototype.sign = async function (key, data) {
 
   this.signedHashValue = hash.subarray(0, 2);
 
-  this.signature = await crypto.signature.sign(hashAlgorithm,
-    publicKeyAlgorithm, key.params, toHash);
+  this.signature = await crypto.signature.sign(
+    publicKeyAlgorithm, hashAlgorithm, key.params, toHash);
 };
 
 /**
@@ -649,8 +649,8 @@ Signature.prototype.verify = async function (key, data) {
     i += mpi[j].read(this.signature.subarray(i, this.signature.length), endian);
   }
 
-  this.verified = await crypto.signature.verify(publicKeyAlgorithm,
-    hashAlgorithm, mpi, key.params,
+  this.verified = await crypto.signature.verify(
+    publicKeyAlgorithm, hashAlgorithm, mpi, key.params,
     util.concatUint8Array([bytes, this.signatureData, trailer]));
 
   return this.verified;

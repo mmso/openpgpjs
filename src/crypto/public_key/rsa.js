@@ -20,16 +20,18 @@
 /**
  * @requires crypto/public_key/jsbn
  * @requires crypto/random
+ * @requires config
  * @requires util
  * @module crypto/public_key/rsa
  */
 
 'use strict';
 
+import { RSA_RAW } from 'asmcrypto.js';
 import BigInteger from './jsbn.js';
-import util from '../../util.js';
 import random from '../random.js';
 import config from '../../config';
+import util from '../../util.js';
 
 function SecureRandom() {
   function nextBytes(byteArray) {
@@ -60,20 +62,13 @@ function unblind(t, n) {
 export default function RSA() {
   /**
    * This function uses jsbn Big Num library to decrypt RSA
-   * @param m
-   *            message
-   * @param n
-   *            RSA public modulus n as BigInteger
-   * @param e
-   *            RSA public exponent as BigInteger
-   * @param d
-   *            RSA d as BigInteger
-   * @param p
-   *            RSA p as BigInteger
-   * @param q
-   *            RSA q as BigInteger
-   * @param u
-   *            RSA u as BigInteger
+   * @param m message
+   * @param n RSA public modulus n as BigInteger
+   * @param e RSA public exponent as BigInteger
+   * @param d RSA d as BigInteger
+   * @param p RSA p as BigInteger
+   * @param q RSA q as BigInteger
+   * @param u RSA u as BigInteger
    * @return {BigInteger} The decrypted value of the message
    */
   function decrypt(m, n, e, d, p, q, u) {
@@ -93,6 +88,7 @@ export default function RSA() {
       t = t.multiply(u).mod(q);
     }
     t = t.multiply(p).add(xp);
+
     if (config.rsa_blinding) {
       t = unblind(t, n);
     }
@@ -113,10 +109,12 @@ export default function RSA() {
   /* Sign and Verify */
   function sign(m, d, n) {
     return m.modPow(d, n);
+//    return RSA_RAW.sign(m, [n, e, d]);
   }
 
   function verify(x, e, n) {
     return x.modPowInt(e, n);
+//    return RSA_RAW.verify(x, [n, e]);
   }
 
   // "empty" RSA key constructor

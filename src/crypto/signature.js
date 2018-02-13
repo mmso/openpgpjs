@@ -1,15 +1,16 @@
 /**
- * @requires util
- * @requires crypto/hash
- * @requires crypto/pkcs1
+ * @requires asmcrypto.js
  * @requires crypto/public_key
+ * @requires crypto/pkcs1
+ * @requires util
  * @module crypto/signature */
 
 'use strict';
 
-import util from '../util';
+import { RSA_RAW } from 'asmcrypto.js'
 import publicKey from './public_key';
-import pkcs1 from './pkcs1.js';
+import pkcs1 from './pkcs1';
+import util from '../util';
 
 export default {
   /**
@@ -38,13 +39,13 @@ export default {
       case 3:
         // RSA Sign-Only [HAC]
         var rsa = new publicKey.rsa();
-        var n = publickey_MPIs[0].toBigInteger();
+        var n = util.str2Uint8Array(publickey_MPIs[0].toBytes());
         var k = publickey_MPIs[0].byteLength();
-        var e = publickey_MPIs[1].toBigInteger();
-        m = msg_MPIs[0].toBigInteger();
-        var EM = rsa.verify(m, e, n);
+        var e = util.str2Uint8Array(publickey_MPIs[1].toBytes());
+        m = msg_MPIs[0].write().slice(2); // FIXME
+        var EM = RSA_RAW.verify(m, [n, e]);
         var EM2 = pkcs1.emsa.encode(hash_algo, data, k);
-        return EM.compareTo(EM2) === 0;
+        return util.hexidump(EM) === EM2;
       case 16:
         // Elgamal (Encrypt-Only) [ELGAMAL] [HAC]
         throw new Error("signing with Elgamal is not defined in the OpenPGP standard.");
@@ -85,13 +86,13 @@ export default {
 
   /**
    * Create a signature on data using the specified algorithm
-   * @param {module:enums.hash} hash_algo hash Algorithm to use (See {@link https://tools.ietf.org/html/rfc4880#section-9.4|RFC 4880 9.4})
    * @param {module:enums.publicKey} algo Asymmetric cipher algorithm to use (See {@link https://tools.ietf.org/html/rfc4880#section-9.1|RFC 4880 9.1})
+   * @param {module:enums.hash} hash_algo hash Algorithm to use (See {@link https://tools.ietf.org/html/rfc4880#section-9.4|RFC 4880 9.4})
    * @param {Array<module:type/mpi>} keyIntegers Public followed by Private key multiprecision algorithm-specific parameters
    * @param {Uint8Array} data Data to be signed
    * @return {Array<module:type/mpi>}
    */
-  sign: async function(hash_algo, algo, keyIntegers, data) {
+  sign: async function(algo, hash_algo, keyIntegers, data) {
 
     data = util.Uint8Array2str(data);
 
@@ -108,16 +109,17 @@ export default {
       case 3:
         // RSA Sign-Only [HAC]
         var rsa = new publicKey.rsa();
-        d = keyIntegers[2].toBigInteger();
-        var n = keyIntegers[0].toBigInteger();
-        m = pkcs1.emsa.encode(hash_algo,
-          data, keyIntegers[0].byteLength());
-        return util.str2Uint8Array(rsa.sign(m, d, n).toMPI());
-
+        var n = util.str2Uint8Array(keyIntegers[0].toBytes());
+        var k = keyIntegers[0].byteLength();
+        var e = util.str2Uint8Array(keyIntegers[1].toBytes());
+        d = util.str2Uint8Array(keyIntegers[2].toBytes());
+        m = util.hex2Uint8Array(
+          '00'+pkcs1.emsa.encode(hash_algo, data, k) // FIXME
+        );
+        return util.Uint8Array2MPI(RSA_RAW.sign(m, [n, e, d]));
       case 17:
         // DSA (Digital Signature Algorithm) [FIPS186] [HAC]
         var dsa = new publicKey.dsa();
-
         var p = keyIntegers[0].toBigInteger();
         var q = keyIntegers[1].toBigInteger();
         var g = keyIntegers[2].toBigInteger();
@@ -128,7 +130,6 @@ export default {
       case 16:
         // Elgamal (Encrypt-Only) [ELGAMAL] [HAC]
         throw new Error('Signing with Elgamal is not defined in the OpenPGP standard.');
-
       case 19:
         // ECDSA
         var ecdsa = publicKey.elliptic.ecdsa;
@@ -144,11 +145,10 @@ export default {
         d = keyIntegers[2].toBigInteger();
         m = data;
         signature = await eddsa.sign(curve.oid, hash_algo, m, d);
-        return new Uint8Array([].concat(
+        return util.concatUint8Array([
           util.Uint8Array2MPI(signature.R.toArrayLike(Uint8Array, 'le', 32)),
           util.Uint8Array2MPI(signature.S.toArrayLike(Uint8Array, 'le', 32))
-        ));
-
+        ]);
       default:
         throw new Error('Invalid signature algorithm.');
     }

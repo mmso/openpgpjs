@@ -325,11 +325,12 @@ export default {
    * Convert a Uint8Array to an MPI array.
    * @function module:util.Uint8Array2MPI
    * @param {Uint8Array} bin An array of (binary) integers to convert
-   * @return {Array<Integer>} MPI-formatted array
+   * @return {Uint8Array} MPI-formatted Uint8Array
    */
   Uint8Array2MPI: function (bin) {
     var size = (bin.length - 1) * 8 + this.nbits(bin[0]);
-    return [(size & 0xFF00) >> 8, size & 0xFF].concat(Array.from(bin));
+    var prefix = Uint8Array.from([(size & 0xFF00) >> 8, size & 0xFF]);
+    return this.concatUint8Array([prefix, bin]);
   },
 
   /**
